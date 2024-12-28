@@ -271,24 +271,25 @@ const sectorOrder = {
     'Bankacılık': 1,
     'Holding': 2,
     
+    // Ulaşım grubu
+    'Havacılık': 3,
+
     // Sanayi ve üretim grubu
-    'Sanayi': 3,
-    'Otomotiv': 4,
+    'Sanayi': 4,
+    'Otomotiv': 5,
     
     // Teknoloji ve iletişim grubu
-    'Teknoloji': 5,
-    'Telekomünikasyon': 6,
+    'Teknoloji': 15,
+    'Telekomünikasyon': 7,
     
     // Enerji ve altyapı grubu
-    'Enerji': 7,
-    'İnşaat ve Gayrimenkul': 8,
+    'Enerji': 8,
     
-    // Tüketici grubu
+    // Tüketim grubu
     'Perakende': 9,
     'Gıda': 10,
     
-    // Ulaşım grubu
-    'Havacılık': 11,
+
     
     // En sonda
     'Diğer': 999
@@ -449,7 +450,7 @@ function redraw() {
             .sort((a, b) => {
                 // Kök seviyesinde (sektörler) manuel sıralama kullan
                 if (a.depth === 1 && b.depth === 1) {
-                    const orderA = sectorOrder[a.data.name] || 998; // Tanımsız sektörler sona yakın
+                    const orderA = sectorOrder[a.data.name] || 998;
                     const orderB = sectorOrder[b.data.name] || 998;
                     return orderA - orderB;
                 }
@@ -495,15 +496,6 @@ function redraw() {
                     .style("opacity", 0);
             });
 
-        // leaf.append("title").text(
-        //   d =>
-        //     `${d
-        //       .ancestors()
-        //       .reverse()
-        //       .map(d => d.data.name)
-        //       .join("/")}\n${format(d.value)}`
-        // );
-
         leaf
             .append("rect")
             .attr("id", d => (d.leafUid = "#leaf").id)
@@ -518,42 +510,82 @@ function redraw() {
             .attr("fill", "#fff")
             .attr("text-anchor", "middle")
             .attr("class", "shadow")
-            .attr("y", function () {
-                const parentData = d3.select(this.parentNode).datum();
-                return (parentData.y1 - parentData.y0) / 2;
+            .attr("y", function (d) {
+                const boxHeight = d.y1 - d.y0;
+                const boxWidth = d.x1 - d.x0;
+                
+                // Mobil için minimum boyut kontrolü
+                if (window.innerWidth <= 768 && (boxHeight < 35 || boxWidth < 50)) {
+                    d3.select(this).style("display", "none");
+                    return 0;
+                }
+                return boxHeight / 2;
             })
-            .attr("font-size", d => Math.min(d.x1 - d.x0, d.y1 - d.y0) / 6);
+            .attr("font-size", d => {
+                const boxHeight = d.y1 - d.y0;
+                const boxWidth = d.x1 - d.x0;
+                
+                // Mobil için daha küçük font
+                if (window.innerWidth <= 768) {
+                    return Math.min(boxWidth / 10, boxHeight / 8) + "px";
+                }
+                return Math.min(boxWidth / 8, boxHeight / 6) + "px";
+            });
 
-        // Add a <tspan class="title"> for every data element.
+        // Şirket kodu
         txt.append("tspan")
-            .text(d => d.data.name)
+            .text(d => {
+                const boxHeight = d.y1 - d.y0;
+                const boxWidth = d.x1 - d.x0;
+                
+                // Mobil için minimum boyut kontrolü
+                if (window.innerWidth <= 768 && (boxHeight < 35 || boxWidth < 50)) {
+                    return "";
+                }
+                return d.data.name;
+            })
             .attr("class", "title")
             .attr("dy", "-1.5em")
-            .attr("x", function () {
-                const parentData = d3.select(this.parentNode).datum();
-                return (parentData.x1 - parentData.x0) / 2;
+            .attr("x", function (d) {
+                return (d.x1 - d.x0) / 2;
             });
 
-        // Add a <tspan class="author"> for every data element.
+        // Fiyat
         txt.append("tspan")
-            .text(d => `₺${format(d.data.price)}`)
+            .text(d => {
+                const boxHeight = d.y1 - d.y0;
+                const boxWidth = d.x1 - d.x0;
+                
+                // Mobil için minimum boyut kontrolü
+                if (window.innerWidth <= 768 && (boxHeight < 35 || boxWidth < 50)) {
+                    return "";
+                }
+                return `₺${format(d.data.price)}`;
+            })
             .attr("class", "price")
             .attr("dy", "1.4em")
-            .attr("x", function () {
-                const parentData = d3.select(this.parentNode).datum();
-                return (parentData.x1 - parentData.x0) / 2;
+            .attr("x", function (d) {
+                return (d.x1 - d.x0) / 2;
             });
 
-        // Add a <tspan class="author"> for every data element.
+        // Yüzde değişim
         txt.append("tspan")
-            .text(d => (d.data.pc > 0) ? `+${d.data.pc}` : `${d.data.pc}`)
+            .text(d => {
+                const boxHeight = d.y1 - d.y0;
+                const boxWidth = d.x1 - d.x0;
+                
+                // Mobil için minimum boyut kontrolü
+                if (window.innerWidth <= 768 && (boxHeight < 35 || boxWidth < 50)) {
+                    return "";
+                }
+                return (d.data.pc > 0) ? `+${d.data.pc}` : `${d.data.pc}`;
+            })
             .attr("class", "percent")
             .attr("dy", "1.4em")
-            .attr("x", function () {
-                const parentData = d3.select(this.parentNode).datum();
-                return (parentData.x1 - parentData.x0) / 2;
+            .attr("x", function (d) {
+                return (d.x1 - d.x0) / 2;
             });
-
+        
         // Add title for the top level
         svg
             .selectAll("titles")
@@ -582,10 +614,11 @@ function redraw() {
     let treemap = d3
         .treemap()
         .size([width, height])
-        .paddingOuter(3)
-        .paddingTop(19)
-        .paddingInner(2)
-        .round(true);
+        .paddingOuter(4)
+        .paddingTop(25)
+        .paddingInner(3)
+        .round(true)
+        .tile(d3.treemapBinary); // Binary algoritmasına geri dönüyoruz
 
     chart();
 }

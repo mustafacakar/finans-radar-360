@@ -55,3 +55,35 @@
     border-radius: 8px;
     z-index: 1000;
   }
+
+  /* Responsive tasarım için medya sorguları */
+  @media screen and (max-width: 768px) {
+    g text {
+      font-size: 10px; /* Mobilde daha küçük yazı boyutu */
+    }
+    
+    g text.shadow {
+      font-size: 10px;
+      text-shadow: 0.015em 0.03em 0 #555;
+    }
+
+    rect {
+      opacity: 0.9; /* Mobilde daha belirgin kutular */
+    }
+
+    .tooltip {
+      font-size: 12px;
+      padding: 6px;
+      max-width: 80vw; /* Ekran genişliğinin %80'i */
+    }
+  }
+
+  /* Sektör isimleri için genel iyileştirmeler */
+  g text {
+    font-weight: 500;
+    paint-order: stroke;
+    stroke: #212121;
+    stroke-width: 2px;
+    stroke-linecap: butt;
+    stroke-linejoin: miter;
+  }
